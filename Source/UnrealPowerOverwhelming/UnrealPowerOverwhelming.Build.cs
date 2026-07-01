@@ -1,53 +1,43 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// <copyright file="UnrealPowerOverwhelming.Build.cs" company="Visualisierungsinstitut der Universität Stuttgart">
+// Copyright © 2026 Visualisierungsinstitut der Universität Stuttgart.
+// Licensed under the MIT licence. See LICENCE file for details.
+// </copyright>
+// <author>Christoph Müller</author>
 
+using Microsoft.Extensions.Logging;
+using System.Diagnostics;
+using System.IO;
 using UnrealBuildTool;
 
-public class UnrealPowerOverwhelming : ModuleRules
-{
-	public UnrealPowerOverwhelming(ReadOnlyTargetRules Target) : base(Target)
-	{
-		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
-		
-		PublicIncludePaths.AddRange(
-			new string[] {
-				// ... add public include paths required here ...
-			}
-			);
-				
-		
-		PrivateIncludePaths.AddRange(
-			new string[] {
-				// ... add other private include paths required here ...
-			}
-			);
-			
-		
-		PublicDependencyModuleNames.AddRange(
-			new string[]
-			{
-				"Core",
-				// ... add other public dependencies that you statically link with here ...
-			}
-			);
-			
-		
-		PrivateDependencyModuleNames.AddRange(
-			new string[]
-			{
-				"CoreUObject",
-				"Engine",
-				"Slate",
-				"SlateCore",
-				// ... add private dependencies that you statically link with here ...	
-			}
-			);
-		
-		
-		DynamicallyLoadedModuleNames.AddRange(
-			new string[]
-			{
-				// ... add any modules that your module loads dynamically here ...
-			}
-			);
-	}
+
+public class UnrealPowerOverwhelming : ModuleRules {
+
+    public UnrealPowerOverwhelming(ReadOnlyTargetRules target) : base(target) {
+        this.PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+
+        this.PublicDependencyModuleNames.AddRange(["Core"]);
+        this.PrivateDependencyModuleNames.AddRange([
+            "CoreUObject",
+            "Engine",
+            "Slate",
+            "SlateCore",
+            "PowerOverwhelming"
+        ]);
+
+        //// Tell the engine where the Power Overwhelming DLLs are located.
+        //var binaryPath = Path.GetFullPath(Path.Combine(
+        //    this.PluginDirectory,
+        //    "Binaries",
+        //    this.Target.Platform.ToString()));
+        //var binaryName = "power_overwhelming.dll";
+        //this.Logger.LogInformation($"Adding Power Overwhelming DLLs from "
+        //    + "{Path} as runtime dependencies.", binaryPath);
+        //Debug.Assert(File.Exists(Path.Combine(binaryPath, binaryName)));
+        //this.RuntimeDependencies.Add($"$(BinaryOutputDir)/{binaryName}",
+        //    Path.Combine(binaryPath, binaryName));
+
+        //this.PublicIncludePaths.AddRange([]);
+        //this.PrivateIncludePaths.AddRange([]);
+        //this.DynamicallyLoadedModuleNames.AddRange([]);
+    }
 }

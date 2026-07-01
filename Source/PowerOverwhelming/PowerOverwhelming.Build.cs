@@ -7,24 +7,52 @@
 using Microsoft.Extensions.Logging;
 using EpicGames.Core;
 using UnrealBuildTool;
+using System;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
-using System.Diagnostics;
-using System;
+using System.Text.RegularExpressions;
 
 
+/// <summary>
+/// Describes how Unreal should build the Power Overwhelming library using
+/// CMake.
+/// </summary>
+/// <remarks>
+/// <para>The Power Overwhelming library is assumed to be located in the
+/// &quot;power-overwhelming&quot; subfolder of this module. This can be
+/// achieved by cloning the submodules when obtaining the plugin from our
+/// GitHub repository.</para>
+/// </remarks>
 public class PowerOverwhelming : ModuleRules {
 
     public PowerOverwhelming(ReadOnlyTargetRules target) : base(target) {
         this.Type = ModuleType.External;
 
+        var generator = "Unix Makefiles";
+        if (this.IsWindows) {
+            generator = target.WindowsPlatform.Compiler switch {
+                WindowsCompiler.VisualStudio2022 => "Visual Studio 17 2022",
+                // TODO: figure out why UE is reporting VS2026 when we use VS2022
+                WindowsCompiler.VisualStudio2026 => "Visual Studio 17 2022",
+                _ => throw new Exception("Unsupported compiler for CMake. Make "
+                    + "sure to add new versions of Visual Studio in the Unreal "
+                    + "build script.")
+            };
+        }
+        this.Logger.LogInformation("Using CMake generator \"{Generator}\".",
+            generator);
+
         this.Logger.LogInformation("Configure CMake in {Folder}.",
             this.BuildFolder);
         var configure = this.ExecuteCommand("cmake",
-            "-G", $"\"{(this.IsWindows ? "Visual Studio 17 2022" : "Unix Makefiles")}\"",
+            "-G", $"\"{generator}\"",
             "-S", $"\"{this.SourceFolder}\"",
             "-B", $"\"{this.BuildFolder}\"",
-            $"-DCMAKE_INSTALL_PREFIX={this.InstallFolder}",
+            $"-DCMAKE_INSTALL_PREFIX={this.IntermediateFolder}",
+            // The next line is important: the DLL must be located in the plugin
+            // directory in order to be loaded by Unreal.
+            $"-DCMAKE_INSTALL_BINDIR={this.BinaryFolder}",
             $"-DPWROWG_BuildDemo=OFF",
             $"-DPWROWG_BuildDriver=OFF",
             $"-DPWROWG_BuildDumpReadings=OFF",
@@ -34,12 +62,14 @@ public class PowerOverwhelming : ModuleRules {
             $"-DPWROWG_BuildTests=OFF",
             $"-DPWROWG_BuildWeb=OFF",
             $"-D{this.GetFeatureState("PWROWG_WithAdl")}",
-            $"-D{this.GetFeatureState("PWROWG_WithBenchlab")}",
+            //$"-D{this.GetFeatureState("PWROWG_WithBenchlab")}",
+            $"-DPWROWG_WithBenchlab=OFF",
             $"-D{this.GetFeatureState("PWROWG_WithIgcl")}",
             $"-D{this.GetFeatureState("PWROWG_WithNiDaqMx")}",
             $"-D{this.GetFeatureState("PWROWG_WithNvapi")}",
             $"-D{this.GetFeatureState("PWROWG_WithNvml")}",
-            $"-D{this.GetFeatureState("PWROWG_WithPowenetics")}",
+            //$"-D{this.GetFeatureState("PWROWG_WithPowenetics")}",
+            $"-DPWROWG_WithPowenetics=OFF",
             $"-D{this.GetFeatureState("PWROWG_WithVisa")}");
         this.Logger.LogInformation("Build using CMake.");
         var build = this.ExecuteCommand("cmake",
@@ -48,23 +78,104 @@ public class PowerOverwhelming : ModuleRules {
             "--target", "\"install\"",
             "-j", Environment.ProcessorCount.ToString());
 
-        this.ExternalDependencies.Add(this.SourceFolder);
+        this.ExternalDependencies.AddRange([
+            this.SourceFolder
+        ]);
 
         this.PublicIncludePaths.Add(Path.Combine(
-            this.InstallFolder,
+            this.IntermediateFolder,
             "include"));
 
         this.PublicAdditionalLibraries.Add(Path.Combine(
-            this.InstallFolder,
+            this.IntermediateFolder,
             "lib",
             "power_overwhelming.lib"));
 
-        // TODO: figure out how to transport the public defines
-
-        //this.DynamicallyLoadedModuleNames.AddRange(Directory.GetFiles(
-        //    Path.Combine(this.InstallFolder, "bin"), "*.dll"));
+        // Figure out what CMake has defined publicly when building the library.
+        // We want to carry over these defines to enable some APIs that are
+        // guarded by preprocessor macros.
+        var cmakeConfig = Path.Combine(
+            this.IntermediateFolder,
+            "lib",
+            "cmake",
+            "power_overwhelming",
+            "power_overwhelmingConfig.cmake");
+        try {
+            var rx = new Regex("INTERFACE_COMPILE_DEFINITIONS\\s+\"([^\"]+)\"");
+            var txt = File.ReadAllText(cmakeConfig);
+            if (rx.Match(txt) is Match m && m.Success) {
+                var defines = m.Groups[1].Value.Split(';');
+                foreach (var d in defines) {
+                    this.PublicDefinitions.Add(d);
+                }
+            } else {
+                this.Logger.LogWarning("Failed to find public defines in the "
+                    + "CMake configuration in \"{Path}\".", cmakeConfig);
+            }
+        } catch (Exception ex) {
+            this.Logger.LogError(ex, "Failed to obtain CMake configuration "
+                + "from \"{Path}\".", cmakeConfig);
+        }
     }
 
+    #region Private properties
+    /// <summary>
+    /// Gets the binary folder where CMake should put the DLLs.
+    /// </summary>
+    private string BinaryFolder => Path.Combine(
+        this.RootFolder,
+        "Binaries",
+        this.Target.Platform.ToString());
+
+    /// <summary>
+    /// Gets the location of the CMake build tree.
+    /// </summary>
+    private string BuildFolder => Path.Combine(
+        this.RootFolder,
+        "Intermediate",
+        "Build",
+        this.Target.Platform.ToString(),
+        "CMake");
+
+    /// <summary>
+    /// Gets the CMake configuration to build.
+    /// </summary>
+    private string Configuration => this.Target.Configuration switch {
+        UnrealTargetConfiguration.Debug => "Debug",
+        UnrealTargetConfiguration.DebugGame => "Debug",
+        _ => "Release",
+    };
+
+    /// <summary>
+    /// The intermediate folder where we will deploy the public headers, import
+    /// libraries, and other intermediate files.
+    /// </summary>
+    private string IntermediateFolder => Path.Combine(
+        this.RootFolder,
+        "Intermediate",
+        "Build",
+        this.Target.Platform.ToString(),
+        "PowerOverwhelming");
+
+    /// <summary>
+    /// Gets whether we are building for Windows.
+    /// </summary>
+    private bool IsWindows => (BuildHostPlatform.Current.Platform
+        == UnrealTargetPlatform.Win64);
+
+    /// <summary>
+    /// Gets the root folder of the plugin.
+    /// </summary>
+    private string RootFolder => Path.GetFullPath(this.PluginDirectory);
+
+    /// <summary>
+    /// Gets the folder where the source of Power Overwhelming is located.
+    /// </summary>
+    private string SourceFolder => Path.Combine(
+        this.ModuleDirectory, "power-overwhelming");
+    #endregion
+
+    #region Private methods
     /// <summary>
     /// Synchronously executes the specified <paramref name="command"/> with
     /// the given <paramref name="arguments"/>.
@@ -157,49 +268,5 @@ public class PowerOverwhelming : ModuleRules {
 
         return $"{feature}={state}";
     }
-
-    /// <summary>
-    /// Gets the location of the CMake build tree.
-    /// </summary>
-    private string BuildFolder => Path.Combine(
-        this.RootFolder,
-        "Intermediate",
-        "Build",
-        this.Target.Platform.ToString(),
-        "CMake");
-
-    /// <summary>
-    /// Gets the CMake configuration to build.
-    /// </summary>
-    private string Configuration => this.Target.Configuration switch {
-        UnrealTargetConfiguration.Debug => "Debug",
-        UnrealTargetConfiguration.DebugGame => "Debug",
-        _ => "Release",
-    };
-
-    /// <summary>
-    /// Gets the binary folder where to put the CMake output.
-    /// </summary>
-    private string InstallFolder => Path.Combine(
-        this.RootFolder,
-        "Binaries",
-        this.Target.Platform.ToString());
-
-    /// <summary>
-    /// Gets whether we are building for Windows.
-    /// </summary>
-    private bool IsWindows => (BuildHostPlatform.Current.Platform
-        == UnrealTargetPlatform.Win64);
-
-    /// <summary>
-    /// Gets the root folder of the plugin.
-    /// </summary>
-    private string RootFolder => Path.GetFullPath(Path.Combine(
-        this.ModuleDirectory, "..", ".."));
-
-    /// <summary>
-    /// Gets the folder where the source of Power Overwhelming is located.
-    /// </summary>
-    private string SourceFolder => Path.Combine(
-        this.ModuleDirectory, "power-overwhelming");
+    #endregion
 }
