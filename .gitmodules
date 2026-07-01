@@ -1,0 +1,3 @@
+[submodule "Source/PowerOverwhelming/power-overwhelming"]
+	path = Source/PowerOverwhelming/power-overwhelming
+	url = https://github.com/UniStuttgart-VISUS/power-overwhelming
