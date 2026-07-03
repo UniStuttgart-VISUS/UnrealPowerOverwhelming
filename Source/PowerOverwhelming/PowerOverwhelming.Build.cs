@@ -70,7 +70,9 @@ public class PowerOverwhelming : ModuleRules {
             $"-D{this.GetFeatureState("PWROWG_WithNvml")}",
             //$"-D{this.GetFeatureState("PWROWG_WithPowenetics")}",
             $"-DPWROWG_WithPowenetics=OFF",
-            $"-D{this.GetFeatureState("PWROWG_WithVisa")}");
+            // TODO: need to figure out how we get the VISA headers into UE.
+            //$"-D{this.GetFeatureState("PWROWG_WithVisa")}");
+            $"-DPWROWG_WithVisa=OFF");
         this.Logger.LogInformation("Build using CMake.");
         var build = this.ExecuteCommand("cmake",
             "--build", $"\"{this.BuildFolder}\"",

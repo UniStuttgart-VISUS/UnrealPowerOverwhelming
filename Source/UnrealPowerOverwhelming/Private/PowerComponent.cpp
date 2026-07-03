@@ -7,7 +7,11 @@
 #include "PowerComponent.h"
 
 #include <visus/pwrowg/dump_sensors.h>
+#include <visus/pwrowg/hmc8015_configuration.h>
 #include <visus/pwrowg/marker_configuration.h>
+#include <visus/pwrowg/rtx_configuration.h>
+#include <visus/pwrowg/tinkerforge_configuration.h>
+#include <visus/pwrowg/usb_pd_configuration.h>
 
 #define LOCTEXT_NAMESPACE "UPowerComponent"
 
@@ -24,6 +28,26 @@ UPowerComponent::UPowerComponent(void)
         SensorPath(TEXT("unreal-power.json")),
         _markers(nullptr) {
     PrimaryComponentTick.bCanEverTick = true;
+
+    {
+        auto i = visus::pwrowg::hmc8015_configuration::id.to_string<TCHAR>();
+        this->DisabledSensorClasses.Add(i.c_str());
+    }
+
+    {
+        auto i = visus::pwrowg::rtx_configuration::id.to_string<TCHAR>();
+        this->DisabledSensorClasses.Add(i.c_str());
+    }
+
+    {
+        auto i = visus::pwrowg::tinkerforge_configuration::id.to_string<TCHAR>();
+        this->DisabledSensorClasses.Add(i.c_str());
+    }
+
+    {
+        auto i = visus::pwrowg::usb_pd_configuration::id.to_string<TCHAR>();
+        this->DisabledSensorClasses.Add(i.c_str());
+    }
 }
 
 
@@ -64,7 +88,8 @@ void UPowerComponent::BeginPlay(void) {
 
     for (auto& d : this->DisabledSensorClasses) {
         try {
-            config.exclude(visus::pwrowg::guid::parse(*d));
+            auto i = visus::pwrowg::guid::parse(*d);
+            config.exclude(i);
         } catch (...) {
             continue;
         }
