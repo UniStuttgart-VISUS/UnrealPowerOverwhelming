@@ -9,6 +9,7 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 
 #include "CoreMinimal.h"
+#include "PowerComponent.h"
 #include "PowerSensor.h"
 
 #include "PowerFunctions.generated.h"
@@ -17,7 +18,7 @@
 /// <summary>
 /// A blueprint function library for interacting with Power Overwhelming.
 /// </summary>
-UCLASS()
+UCLASS(Category = "Power Overwhelming")
 class UNREALPOWEROVERWHELMING_API UPowerFunctions final
         : public UBlueprintFunctionLibrary {
     GENERATED_BODY()
@@ -29,9 +30,9 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Power Overwhelming")
     static TSet<FString> GetSensorClassIDs();
 
-    // Gets the IDs of all sensors that are currently available to the Power
+    // Gets the all sensors that are currently available to the Power
     // Overwhelming plugin under the default configuration.
     UFUNCTION(BlueprintCallable, Category = "Power Overwhelming")
-    static TArray<FString> GetSensorIDs();
+    static TArray<FPowerSensor> GetSensors();
 
 };

@@ -58,6 +58,10 @@ public:
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Output")
     FString SensorPath;
 
+    // Emits a marker with the specified ID value.
+    UFUNCTION(BlueprintCallable)
+    bool EmitMarker(const int id);
+
     /// <inheritdoc />
     virtual void TickComponent(float dt,
         ELevelTick type,

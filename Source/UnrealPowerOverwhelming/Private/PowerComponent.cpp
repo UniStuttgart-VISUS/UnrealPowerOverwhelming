@@ -28,6 +28,18 @@ UPowerComponent::UPowerComponent(void)
 
 
 /*
+ * UPowerComponent::EmitMarker
+ */
+bool UPowerComponent::EmitMarker(const int id) {
+    if (this->_markers == nullptr) {
+        return false;
+    }
+
+    return this->_markers->emit(id);
+}
+
+
+/*
  * UPowerComponent::TickComponent
  */
 void UPowerComponent::TickComponent(float dt,

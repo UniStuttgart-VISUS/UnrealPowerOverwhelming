@@ -6,6 +6,8 @@
 
 #include "PowerFunctions.h"
 
+#include <cassert>
+
 #include <visus/pwrowg/sensor_array.h>
 
 
@@ -33,9 +35,9 @@ TSet<FString> UPowerFunctions::GetSensorClassIDs(void) {
 
 
 /*
- * UPowerFunctions::GetSensorIDs
+ * UPowerFunctions::GetSensors
  */
-TArray<FString> UPowerFunctions::GetSensorIDs(void) {
+TArray<FPowerSensor> UPowerFunctions::GetSensors(void) {
     visus::pwrowg::sensor_array_configuration config;
     TArray<visus::pwrowg::sensor_description> sensors;
 
@@ -44,9 +46,9 @@ TArray<FString> UPowerFunctions::GetSensorIDs(void) {
     visus::pwrowg::sensor_array::all_descriptions(
         sensors.GetData(), sensors.Num(), config);
 
-    TArray<FString> retval;
+    TArray<FPowerSensor> retval;
     for (auto& s : sensors) {
-        retval.Add(FString(s.id()));
+        retval.Add(FPowerSensor(s));
     }
 
     return retval;
