@@ -24,17 +24,16 @@ public class UnrealPowerOverwhelming : ModuleRules {
             "PowerOverwhelming"
         ]);
 
-        //// Tell the engine where the Power Overwhelming DLLs are located.
-        //var binaryPath = Path.GetFullPath(Path.Combine(
-        //    this.PluginDirectory,
-        //    "Binaries",
-        //    this.Target.Platform.ToString()));
-        //var binaryName = "power_overwhelming.dll";
-        //this.Logger.LogInformation($"Adding Power Overwhelming DLLs from "
-        //    + "{Path} as runtime dependencies.", binaryPath);
-        //Debug.Assert(File.Exists(Path.Combine(binaryPath, binaryName)));
-        //this.RuntimeDependencies.Add($"$(BinaryOutputDir)/{binaryName}",
-        //    Path.Combine(binaryPath, binaryName));
+        // Tell the engine where the Power Overwhelming DLLs are located.
+        var binaryPath = Path.GetFullPath(Path.Combine(
+            this.PluginDirectory,
+            "Binaries",
+            this.Target.Platform.ToString()));
+        foreach (var b in Directory.GetFiles(binaryPath, "*.dll")) {
+            this.Logger.LogInformation("Adding {Path} as runtime dependency.",
+                b);
+            this.RuntimeDependencies.Add(b);
+        }
 
         //this.PublicIncludePaths.AddRange([]);
         //this.PrivateIncludePaths.AddRange([]);
