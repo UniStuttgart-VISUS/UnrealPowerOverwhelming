@@ -62,17 +62,14 @@ public class PowerOverwhelming : ModuleRules {
             $"-DPWROWG_BuildTests=OFF",
             $"-DPWROWG_BuildWeb=OFF",
             $"-D{this.GetFeatureState("PWROWG_WithAdl")}",
-            //$"-D{this.GetFeatureState("PWROWG_WithBenchlab")}",
-            $"-DPWROWG_WithBenchlab=OFF",
+            $"-D{this.GetFeatureState("PWROWG_WithBenchlab", "OFF")}",
             $"-D{this.GetFeatureState("PWROWG_WithIgcl")}",
             $"-D{this.GetFeatureState("PWROWG_WithNiDaqMx")}",
             $"-D{this.GetFeatureState("PWROWG_WithNvapi")}",
             $"-D{this.GetFeatureState("PWROWG_WithNvml")}",
-            //$"-D{this.GetFeatureState("PWROWG_WithPowenetics")}",
-            $"-DPWROWG_WithPowenetics=OFF",
+            $"-D{this.GetFeatureState("PWROWG_WithPowenetics", "OFF")}",
             // TODO: need to figure out how we get the VISA headers into UE.
-            //$"-D{this.GetFeatureState("PWROWG_WithVisa")}");
-            $"-DPWROWG_WithVisa=OFF");
+            $"-D{this.GetFeatureState("PWROWG_WithVisa", "OFF")}");
         this.Logger.LogInformation("Build using CMake.");
         var build = this.ExecuteCommand("cmake",
             "--build", $"\"{this.BuildFolder}\"",
@@ -255,12 +252,14 @@ public class PowerOverwhelming : ModuleRules {
     /// </summary>
     /// <param name="feature">The feature name in the form of the
     /// &quot;PWROWG_With*&quot; CMake variables.</param>
+    /// <param name="default">The default state used when the environment
+    /// variable for the feature was not found.</param>
     /// <returns>The final feature string to be passed to CMake.</returns>
-    private string GetFeatureState(string feature) {
+    private string GetFeatureState(string feature, string @default = "ON") {
         var state = Environment.GetEnvironmentVariable(feature);
         state = state switch {
-            null => "ON",
-            "" => "ON",
+            null => @default,
+            "" => @default,
             "1" => "ON",
             "true" => "ON",
             "0" => "OFF",
