@@ -6,16 +6,27 @@
 
 #include "UnrealPowerOverwhelming.h"
 
+#include "Interfaces/IPluginManager.h"
+
 
 #define LOCTEXT_NAMESPACE "FUnrealPowerOverwhelmingModule"
+
+
+/*
+ * FUnrealPowerOverwhelmingModule::FUnrealPowerOverwhelmingModule
+ */
+FUnrealPowerOverwhelmingModule::FUnrealPowerOverwhelmingModule(void) noexcept
+    : _nvapi(nullptr) { }
+
 
 /*
  * FUnrealPowerOverwhelmingModule::ShutdownModule
  */
 void FUnrealPowerOverwhelmingModule::ShutdownModule(void) {
-    // This function may be called during shutdown to clean up your module. For
-    // modules that support dynamic reloading, we call this function before
-    // unloading the module.
+    if (this->_nvapi != nullptr) {
+        FPlatformProcess::FreeDllHandle(this->_nvapi);
+        this->_nvapi = nullptr;
+    }
 }
 
 
@@ -23,8 +34,17 @@ void FUnrealPowerOverwhelmingModule::ShutdownModule(void) {
  * FUnrealPowerOverwhelmingModule::StartupModule
  */
 void FUnrealPowerOverwhelmingModule::StartupModule(void) {
-    // This code will execute after your module is loaded into memory; the
-    // exact timing is specified in the .uplugin file per-module
+    auto& plugins = IPluginManager::Get();
+    auto plugin = plugins.FindPlugin(TEXT("UnrealPowerOverwhelming"));
+
+    if (plugin != nullptr) {
+        auto path = FPaths::Combine(
+            plugin->GetBaseDir(),
+            TEXT("Binaries"),
+            FPlatformProcess::GetBinariesSubdirectory(),
+            TEXT("pwrovrnvapi.dll"));
+        this->_nvapi = FPlatformProcess::GetDllHandle(*path);
+    }
 }
 
 #undef LOCTEXT_NAMESPACE

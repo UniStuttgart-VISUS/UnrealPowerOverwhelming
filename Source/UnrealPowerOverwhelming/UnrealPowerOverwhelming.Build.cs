@@ -19,6 +19,7 @@ public class UnrealPowerOverwhelming : ModuleRules {
         this.PrivateDependencyModuleNames.AddRange([
             "CoreUObject",
             "Engine",
+            "Projects",
             "Slate",
             "SlateCore",
             "PowerOverwhelming"

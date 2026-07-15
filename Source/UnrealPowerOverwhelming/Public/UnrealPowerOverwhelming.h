@@ -16,7 +16,13 @@ class FUnrealPowerOverwhelmingModule : public IModuleInterface {
 
 public:
 
+    FUnrealPowerOverwhelmingModule(void) noexcept;
+
     virtual void ShutdownModule(void) override;
 
     virtual void StartupModule(void) override;
+
+private:
+
+    void *_nvapi;
 };

@@ -43,6 +43,8 @@ public class PowerOverwhelming : ModuleRules {
         this.Logger.LogInformation("Using CMake generator \"{Generator}\".",
             generator);
 
+        var visa = this.VisaInclude;
+
         this.Logger.LogInformation("Configure CMake in {Folder}.",
             this.BuildFolder);
         var configure = this.ExecuteCommand("cmake",
@@ -68,8 +70,7 @@ public class PowerOverwhelming : ModuleRules {
             $"-D{this.GetFeatureState("PWROWG_WithNvapi")}",
             $"-D{this.GetFeatureState("PWROWG_WithNvml")}",
             $"-D{this.GetFeatureState("PWROWG_WithPowenetics", "OFF")}",
-            // TODO: need to figure out how we get the VISA headers into UE.
-            $"-D{this.GetFeatureState("PWROWG_WithVisa", "OFF")}");
+            $"-D{this.GetFeatureState("PWROWG_WithVisa", (visa is not null) ? "ON" : "OFF")}");
         this.Logger.LogInformation("Build using CMake.");
         var build = this.ExecuteCommand("cmake",
             "--build", $"\"{this.BuildFolder}\"",
@@ -84,6 +85,9 @@ public class PowerOverwhelming : ModuleRules {
         this.PublicIncludePaths.Add(Path.Combine(
             this.IntermediateFolder,
             "include"));
+        if (visa is not null) {
+            this.PublicIncludePaths.Add(visa);
+        }
 
         this.PublicAdditionalLibraries.Add(Path.Combine(
             this.IntermediateFolder,
@@ -172,6 +176,37 @@ public class PowerOverwhelming : ModuleRules {
     /// </summary>
     private string SourceFolder => Path.Combine(
         this.ModuleDirectory, "power-overwhelming");
+
+    /// <summary>
+    /// Gets, if available, the folder where the VISA includes are located.
+    /// </summary>
+    private string VisaInclude {
+        get {
+            string[] installs = [
+                Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
+                Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86)
+            ];
+            string[] includes = [
+                Path.Combine("WinNT", "RsVisa", "include"),
+                Path.Combine("Win64", "RsVisa", "include"),
+                Path.Combine("include", "rsvisa")
+            ];
+
+            foreach (var i in installs) {
+                var p = Path.Combine(i, "IVI Foundation", "VISA");
+
+                foreach (var j in includes) {
+                    var q = Path.Combine(p, j);
+                    if (Directory.Exists(q)) {
+                        this.Logger.LogInformation("Found VISA in \"{Path}\".", q);
+                        return q;
+                    }
+                }
+            }
+
+            return null;
+        }
+    }
     #endregion
 
     #region Private methods
