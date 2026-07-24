@@ -43,6 +43,7 @@ public class PowerOverwhelming : ModuleRules {
         this.Logger.LogInformation("Using CMake generator \"{Generator}\".",
             generator);
 
+        var daqmx = this.DaqmxInclude;
         var visa = this.VisaInclude;
 
         this.Logger.LogInformation("Configure CMake in {Folder}.",
@@ -66,7 +67,7 @@ public class PowerOverwhelming : ModuleRules {
             $"-D{this.GetFeatureState("PWROWG_WithAdl")}",
             $"-D{this.GetFeatureState("PWROWG_WithBenchlab", "OFF")}",
             $"-D{this.GetFeatureState("PWROWG_WithIgcl")}",
-            $"-D{this.GetFeatureState("PWROWG_WithNiDaqMx")}",
+            $"-D{this.GetFeatureState("PWROWG_WithNiDaqMx", (daqmx is not null) ? "ON" : "OFF")}",
             $"-D{this.GetFeatureState("PWROWG_WithNvapi")}",
             $"-D{this.GetFeatureState("PWROWG_WithNvml")}",
             $"-D{this.GetFeatureState("PWROWG_WithPowenetics", "OFF")}",
@@ -148,6 +149,39 @@ public class PowerOverwhelming : ModuleRules {
         UnrealTargetConfiguration.DebugGame => "Debug",
         _ => "Release",
     };
+
+    /// <summary>
+    /// Gets, if available, the folder where the NI-DAQmx includes are located.
+    /// </summary>
+    private string DaqmxInclude {
+        get {
+            var env = Environment.GetEnvironmentVariable("NIEXTCCOMPILERSUPP");
+
+            if (string.IsNullOrWhiteSpace(env) && Directory.Exists(env)) {
+                this.Logger.LogInformation("Found NI-DAQmx in \"{Path}\".", env);
+                return env;
+            }
+
+            string[] installs = [
+                Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
+                Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86)
+            ];
+
+            foreach (var i in installs) {
+                var p = Path.Combine(i,
+                    "National Instruments",
+                    "Shared",
+                    "ExternalCompilerSupport",
+                    "C");
+                if (Directory.Exists(p)) {
+                    this.Logger.LogInformation("Found NI-DAQmx in \"{Path}\".", p);
+                    return p;
+                }
+            }
+
+            return null;
+        }
+    }
 
     /// <summary>
     /// The intermediate folder where we will deploy the public headers, import

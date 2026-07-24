@@ -6,7 +6,9 @@
 
 #pragma once
 
+//#include <visus/pwrowg/daqmx_sensor_trigger.h>
 #include <visus/pwrowg/marker_controller.h>
+#include <visus/pwrowg/rtx_sensor_trigger.h>
 #include <visus/pwrowg/sensor_array.h>
 #include <visus/pwrowg/thread_local_sink.h>
 
@@ -30,6 +32,11 @@ public:
     /// </summary>
     UPowerComponent();
 
+    // Gets or sets the path to a JSON file that contains the configuration of
+    // the NI-DAQmx sensors.
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Sensors")
+    FString DaqmxConfiguration;
+
     // Gets or sets the GUIDs of the sensor classes that will not be enumerated
     // when the sensor array is created.
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Sensors")
@@ -43,6 +50,11 @@ public:
     // saved to.
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Output")
     FString OutputPath;
+
+    // Gets or sets the path to a JSON file that contains the configuration of
+    // the Rohde & Schwarz RTA/RTB sensors.
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Sensors")
+    FString RtxConfiguration;
 
     // Gets or sets the number of samples that will be buffered before writing
     // to the output file.
@@ -67,6 +79,10 @@ public:
         ELevelTick type,
         FActorComponentTickFunction *function) override;
 
+    // Triggers manual sensors like oscilloscopes.
+    UFUNCTION(BlueprintCallable)
+    bool Trigger();
+
 protected:
 
     /// <inheritdoc />
@@ -77,7 +93,9 @@ protected:
 
 private:
 
+    //visus::pwrowg::daqmx_sensor_trigger _daqmx_trigger;
     visus::pwrowg::marker_controller *_markers;
+    visus::pwrowg::rtx_sensor_trigger _rtx_trigger;
     visus::pwrowg::sensor_array _sensors;
     TSharedPtr<visus::pwrowg::thread_local_sink<FPowerSink>> _sink;
 };

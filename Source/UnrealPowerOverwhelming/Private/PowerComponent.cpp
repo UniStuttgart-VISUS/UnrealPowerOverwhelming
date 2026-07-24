@@ -6,6 +6,7 @@
 
 #include "PowerComponent.h"
 
+#include <visus/pwrowg/daqmx_configuration.h>
 #include <visus/pwrowg/dump_sensors.h>
 #include <visus/pwrowg/hmc8015_configuration.h>
 #include <visus/pwrowg/marker_configuration.h>
@@ -29,6 +30,7 @@ UPowerComponent::UPowerComponent(void)
         _markers(nullptr) {
     PrimaryComponentTick.bCanEverTick = true;
 
+    // Disable uncommon sensors which are slow to load by default.
     {
         auto i = visus::pwrowg::hmc8015_configuration::id.to_string<TCHAR>();
         this->DisabledSensorClasses.Add(i.c_str());
@@ -78,6 +80,27 @@ void UPowerComponent::TickComponent(float dt,
 
 
 /*
+ * UPowerComponent::Trigger
+ */
+UFUNCTION(BlueprintCallable)
+bool UPowerComponent::Trigger() {
+    try {
+        return this->_rtx_trigger.acquire(
+            [](void) {
+                UE_LOG(LogTemp, Verbose, TEXT("RTx sample acquired."));
+            },
+            [](std::exception_ptr) {
+                UE_LOG(LogTemp, Warning, TEXT("RTx acquisition failed."));
+                return true;
+            });
+    } catch (...) {
+        UE_LOG(LogTemp, Warning, TEXT("Failed triggering RTx sensors."));
+        return false;
+    }
+}
+
+
+/*
  * UPowerComponent::BeginPlay
  */
 void UPowerComponent::BeginPlay(void) {
@@ -101,6 +124,19 @@ void UPowerComponent::BeginPlay(void) {
     config.sample_every(std::abs(this->SampleInterval))
         .deliver_to(decltype(this->_sink)::ElementType::sample_callback)
         .deliver_context(this->_sink.Get());
+
+    if (FPaths::FileExists(this->DaqmxConfiguration)) {
+        //config.load_daqmx(*this->DaqmxConfiguration);
+    }
+
+    if (FPaths::FileExists(this->RtxConfiguration)) {
+        UE_LOG(LogTemp, Verbose, TEXT("Configuring RTx sensors from JSON."));
+        config.configure<visus::pwrowg::rtx_configuration>(
+            [this](visus::pwrowg::rtx_configuration& c) {
+                c = visus::pwrowg::rtx_configuration::load(
+                    *this->RtxConfiguration);
+            });
+    }
 
     UE_LOG(LogTemp, Verbose, TEXT("Creating Power Overwhelming sensor array."));
     this->_sensors = visus::pwrowg::sensor_array::for_all(std::move(config));
