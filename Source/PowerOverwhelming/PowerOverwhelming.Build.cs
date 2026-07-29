@@ -86,6 +86,9 @@ public class PowerOverwhelming : ModuleRules {
         this.PublicIncludePaths.Add(Path.Combine(
             this.IntermediateFolder,
             "include"));
+        //if (daqmx is not null) {
+        //    this.PublicIncludePaths.Add(daqmx);
+        //}
         if (visa is not null) {
             this.PublicIncludePaths.Add(visa);
         }
@@ -103,7 +106,7 @@ public class PowerOverwhelming : ModuleRules {
             "lib",
             "cmake",
             "power_overwhelming",
-            "power_overwhelmingConfig.cmake");
+            "power_overwhelmingTargets.cmake");
         try {
             var rx = new Regex("INTERFACE_COMPILE_DEFINITIONS\\s+\"([^\"]+)\"");
             var txt = File.ReadAllText(cmakeConfig);
@@ -175,7 +178,7 @@ public class PowerOverwhelming : ModuleRules {
                     "C");
                 if (Directory.Exists(p)) {
                     this.Logger.LogInformation("Found NI-DAQmx in \"{Path}\".", p);
-                    return p;
+                    return Path.Combine(p, "include");
                 }
             }
 

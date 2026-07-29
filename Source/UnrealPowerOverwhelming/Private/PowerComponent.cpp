@@ -84,19 +84,35 @@ void UPowerComponent::TickComponent(float dt,
  */
 UFUNCTION(BlueprintCallable)
 bool UPowerComponent::Trigger() {
+    bool retval = false;
+
     try {
-        return this->_rtx_trigger.acquire(
+        retval = this->_rtx_trigger.acquire(
             [](void) {
                 UE_LOG(LogTemp, Verbose, TEXT("RTx sample acquired."));
             },
             [](std::exception_ptr) {
                 UE_LOG(LogTemp, Warning, TEXT("RTx acquisition failed."));
                 return true;
-            });
+            }) || retval;
     } catch (...) {
         UE_LOG(LogTemp, Warning, TEXT("Failed triggering RTx sensors."));
-        return false;
     }
+
+    try {
+        retval = this->_daqmx_trigger.acquire(
+            [](void) {
+                UE_LOG(LogTemp, Verbose, TEXT("NI-DAQmx sample acquired."));
+            },
+            [](std::exception_ptr) {
+                UE_LOG(LogTemp, Warning, TEXT("NI-DAQmx acquisition failed."));
+                return true;
+            }) || retval;
+    } catch (...) {
+        UE_LOG(LogTemp, Warning, TEXT("Failed triggering NI-DAQmx sensors."));
+    }
+
+    return retval;
 }
 
 

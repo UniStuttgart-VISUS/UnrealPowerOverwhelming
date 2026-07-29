@@ -6,7 +6,7 @@
 
 #pragma once
 
-//#include <visus/pwrowg/daqmx_sensor_trigger.h>
+#include <visus/pwrowg/daqmx_sensor_trigger.h>
 #include <visus/pwrowg/marker_controller.h>
 #include <visus/pwrowg/rtx_sensor_trigger.h>
 #include <visus/pwrowg/sensor_array.h>
@@ -93,7 +93,7 @@ protected:
 
 private:
 
-    //visus::pwrowg::daqmx_sensor_trigger _daqmx_trigger;
+    visus::pwrowg::daqmx_sensor_trigger _daqmx_trigger;
     visus::pwrowg::marker_controller *_markers;
     visus::pwrowg::rtx_sensor_trigger _rtx_trigger;
     visus::pwrowg::sensor_array _sensors;

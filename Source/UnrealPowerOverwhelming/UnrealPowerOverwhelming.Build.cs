@@ -25,14 +25,15 @@ public class UnrealPowerOverwhelming : ModuleRules {
             "PowerOverwhelming"
         ]);
 
-        // Tell the engine where the Power Overwhelming DLLs are located.
+        // Tell the engine where the Power Overwhelming DLLs are located and
+        // that these should not be loaded directly, but will be explicitly
+        // loaded during plugin initialisation.
         var binaryPath = Path.GetFullPath(Path.Combine(
             this.PluginDirectory,
             "Binaries",
             this.Target.Platform.ToString()));
         foreach (var b in Directory.GetFiles(binaryPath, "*.dll")) {
-            this.Logger.LogInformation("Adding {Path} as runtime dependency.",
-                b);
+            this.Logger.LogInformation("Adding {Path} as runtime dependency.", b);
             this.RuntimeDependencies.Add(b);
         }
 
