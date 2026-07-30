@@ -51,6 +51,10 @@ public:
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Output")
     FString OutputPath;
 
+    // Gets or sets the timeout for the Powenetics sensor in milliseconds.
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Sensors")
+    int32 PoweneticsTimeout;
+
     // Gets or sets the path to a JSON file that contains the configuration of
     // the Rohde & Schwarz RTA/RTB sensors.
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Sensors")
@@ -69,6 +73,48 @@ public:
     // logged.
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Output")
     FString SensorPath;
+
+    // Gets or sets the current conversion time of the Tinkerforge sensor. Note
+    // that this is an enumerated value which can be looked up in the
+    // Tinkerforge documentation.
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Sensors")
+    uint8 TinkerforgeCurrentConversionTime;
+
+    // Gets or sets the location of the Tinkerforge end point.
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Sensors")
+    FString TinkerforgeEndPoint;
+
+    // Gets or sets how many hardware samples the Tinkerforge sensor should
+    // average to obtain an output sample. Note that this is an enumerated
+    // value which can be looked up in the Tinkerforge documentation.
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Sensors")
+    uint8 TinkerforgeSampleAveraging;
+
+    // Gets or sets the timeout for the Tinkerforge end point in milliseconds.
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Sensors")
+    int64 TinkerforgeTimeout;
+
+    // Gets or sets the voltage conversion time of the Tinkerforge sensor. Note
+    // that this is an enumerated value which can be looked up in the
+    // Tinkerforge documentation.
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Sensors")
+    uint8 TinkerforgeVoltageConversionTime;
+
+    // Gets or sets the timeout, in milliseconds, for connection to the USB-PD
+    // sensor.
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Sensors")
+    int32 UsbPdConnectTimeout;
+
+    // Gets or sets the timeout, in milliseconds, for reading from the USB-PD
+    // sensor.
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Sensors")
+    int32 UsbPdReadTimeout;
+
+    // Gets or sets the timeout, in milliseconds, for writing to the USB-PD
+    // sensor.
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Sensors")
+    int32 UsbPdWriteTimeout;
+
 
     // Emits a marker with the specified ID value.
     UFUNCTION(BlueprintCallable)

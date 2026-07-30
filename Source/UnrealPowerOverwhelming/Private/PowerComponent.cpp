@@ -6,10 +6,12 @@
 
 #include "PowerComponent.h"
 
+#include <visus/pwrowg/convert_string.h>
 #include <visus/pwrowg/daqmx_configuration.h>
 #include <visus/pwrowg/dump_sensors.h>
 #include <visus/pwrowg/hmc8015_configuration.h>
 #include <visus/pwrowg/marker_configuration.h>
+#include <visus/pwrowg/powenetics_configuration.h>
 #include <visus/pwrowg/rtx_configuration.h>
 #include <visus/pwrowg/tinkerforge_configuration.h>
 #include <visus/pwrowg/usb_pd_configuration.h>
@@ -24,9 +26,17 @@
 UPowerComponent::UPowerComponent(void)
         : MarkTicks(false),
         OutputPath(TEXT("unreal-power.csv")),
+        PoweneticsTimeout(1000),
         SampleBufferSize(1024),
         SampleInterval(5),
         SensorPath(TEXT("unreal-power.json")),
+        TinkerforgeCurrentConversionTime(3),
+        TinkerforgeSampleAveraging(1),
+        TinkerforgeTimeout(1000),
+        TinkerforgeVoltageConversionTime(3),
+        UsbPdConnectTimeout(1000),
+        UsbPdReadTimeout(5),
+        UsbPdWriteTimeout(100),
         _markers(nullptr) {
     PrimaryComponentTick.bCanEverTick = true;
 
@@ -49,6 +59,14 @@ UPowerComponent::UPowerComponent(void)
     {
         auto i = visus::pwrowg::usb_pd_configuration::id.to_string<TCHAR>();
         this->DisabledSensorClasses.Add(i.c_str());
+    }
+
+    {
+        visus::pwrowg::tinkerforge_configuration::end_point e;
+        auto h = visus::pwrowg::convert_string<FString::ElementType>(e.name());
+        this->TinkerforgeEndPoint = h.c_str();
+        this->TinkerforgeEndPoint.AppendChar(TEXT(':'));
+        this->TinkerforgeEndPoint.AppendInt(e.port());
     }
 }
 
@@ -142,8 +160,18 @@ void UPowerComponent::BeginPlay(void) {
         .deliver_context(this->_sink.Get());
 
     if (FPaths::FileExists(this->DaqmxConfiguration)) {
-        //config.load_daqmx(*this->DaqmxConfiguration);
+        UE_LOG(LogTemp, Verbose, TEXT("Configuring DAQmx sensors from JSON."));
+        config.configure<visus::pwrowg::daqmx_configuration>(
+            [this](visus::pwrowg::daqmx_configuration& c) {
+                c = visus::pwrowg::daqmx_configuration::load(
+                    *this->DaqmxConfiguration);
+            });
     }
+
+    config.configure<visus::pwrowg::powenetics_configuration>(
+        [this](visus::pwrowg::powenetics_configuration& c) {
+            c.timeout(std::chrono::milliseconds(this->PoweneticsTimeout));
+        });
 
     if (FPaths::FileExists(this->RtxConfiguration)) {
         UE_LOG(LogTemp, Verbose, TEXT("Configuring RTx sensors from JSON."));
@@ -153,6 +181,31 @@ void UPowerComponent::BeginPlay(void) {
                     *this->RtxConfiguration);
             });
     }
+
+    if (!this->TinkerforgeEndPoint.IsEmpty()) {
+        typedef visus::pwrowg::tinkerforge_sample_averaging averaging;
+        typedef visus::pwrowg::tinkerforge_conversion_time conversion;
+        typedef visus::pwrowg::tinkerforge_configuration::end_point end_point;
+        config.configure<visus::pwrowg::tinkerforge_configuration>(
+            [this](visus::pwrowg::tinkerforge_configuration& c) {
+                auto e = end_point::parse(*this->TinkerforgeEndPoint);
+                c.end_points(&e, 1);
+                c.averaging(static_cast<averaging>(
+                    this->TinkerforgeSampleAveraging));
+                c.current_conversion_time(static_cast<conversion>(
+                    this->TinkerforgeCurrentConversionTime));
+                c.voltage_conversion_time(static_cast<conversion>(
+                    this->TinkerforgeVoltageConversionTime));
+                c.timeout(std::chrono::milliseconds(this->TinkerforgeTimeout));
+            });
+    }
+
+    config.configure<visus::pwrowg::usb_pd_configuration>(
+        [this](visus::pwrowg::usb_pd_configuration& c) {
+            c.read_timeout(std::chrono::milliseconds(this->UsbPdReadTimeout));
+            c.timeout(std::chrono::milliseconds(this->UsbPdConnectTimeout));
+            c.write_timeout(std::chrono::milliseconds(this->UsbPdWriteTimeout));
+        });
 
     UE_LOG(LogTemp, Verbose, TEXT("Creating Power Overwhelming sensor array."));
     this->_sensors = visus::pwrowg::sensor_array::for_all(std::move(config));
