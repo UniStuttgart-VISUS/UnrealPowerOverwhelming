@@ -30,6 +30,7 @@ UPowerComponent::UPowerComponent(void)
         SampleBufferSize(1024),
         SampleInterval(5),
         SensorPath(TEXT("unreal-power.json")),
+        StartWithGame(false),
         TinkerforgeCurrentConversionTime(3),
         TinkerforgeSampleAveraging(1),
         TinkerforgeTimeout(1000),
@@ -84,6 +85,44 @@ bool UPowerComponent::EmitMarker(const int id) {
 
 
 /*
+ * UPowerComponent::Start
+ */
+bool UPowerComponent::Start(void) {
+    try {
+        UE_LOG(LogTemp, Verbose, TEXT("Opening power output file %s."),
+            *this->OutputPath);
+        this->_sink->Open(this->OutputPath);
+
+        UE_LOG(LogTemp, Verbose, TEXT("Starting Power Overwhelming sensor ")
+            TEXT("array."));
+        this->_sensors.start();
+        return true;
+    } catch (...) {
+        UE_LOG(LogTemp, Warning, TEXT("Failed starting Power Overwhelming ")
+            TEXT("sensors."));
+        return false;
+    }
+}
+
+
+/*
+ * UPowerComponent::Stop
+ */
+bool UPowerComponent::Stop(void) {
+    try {
+        UE_LOG(LogTemp, Verbose, TEXT("Stopping Power Overwhelming sensor ")
+            TEXT("array."));
+        this->_sensors.stop();
+        return true;
+    } catch (...) {
+        UE_LOG(LogTemp, Warning, TEXT("Failed stopping Power Overwhelming ")
+            TEXT("sensors."));
+        return false;
+    }
+}
+
+
+/*
  * UPowerComponent::TickComponent
  */
 void UPowerComponent::TickComponent(float dt,
@@ -100,7 +139,6 @@ void UPowerComponent::TickComponent(float dt,
 /*
  * UPowerComponent::Trigger
  */
-UFUNCTION(BlueprintCallable)
 bool UPowerComponent::Trigger() {
     bool retval = false;
 
@@ -153,7 +191,7 @@ void UPowerComponent::BeginPlay(void) {
     }
 
     this->_sink = MakeShared<visus::pwrowg::thread_local_sink<FPowerSink>>(
-        this->SampleBufferSize, this->OutputPath);
+        this->SampleBufferSize);
 
     config.sample_every(std::abs(this->SampleInterval))
         .deliver_to(decltype(this->_sink)::ElementType::sample_callback)
@@ -165,6 +203,7 @@ void UPowerComponent::BeginPlay(void) {
             [this](visus::pwrowg::daqmx_configuration& c) {
                 c = visus::pwrowg::daqmx_configuration::load(
                     *this->DaqmxConfiguration);
+                this->_daqmx_trigger = c.trigger();
             });
     }
 
@@ -179,6 +218,7 @@ void UPowerComponent::BeginPlay(void) {
             [this](visus::pwrowg::rtx_configuration& c) {
                 c = visus::pwrowg::rtx_configuration::load(
                     *this->RtxConfiguration);
+                this->_rtx_trigger = c.trigger();
             });
     }
 
@@ -217,8 +257,9 @@ void UPowerComponent::BeginPlay(void) {
     UE_LOG(LogTemp, Verbose, TEXT("Dumping sensor details."));
     visus::pwrowg::dump_sensors(this->_sensors, *this->SensorPath);
 
-    UE_LOG(LogTemp, Verbose, TEXT("Starting Power Overwhelming sensor array."));
-    this->_sensors.start();
+    if (this->StartWithGame) {
+        this->Start();
+    }
 }
 
 
@@ -227,13 +268,7 @@ void UPowerComponent::BeginPlay(void) {
  */
 void UPowerComponent::EndPlay(const EEndPlayReason::Type reason) {
     Super::EndPlay(reason);
-    UE_LOG(LogTemp, Verbose, TEXT("Stopping Power Overwhelming sensor array."));
-    this->_sensors.stop();
+    this->Stop();
 }
 
 #undef LOCTEXT_NAMESPACE
-
-
-
-
-

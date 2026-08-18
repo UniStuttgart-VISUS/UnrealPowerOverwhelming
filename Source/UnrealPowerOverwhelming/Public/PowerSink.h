@@ -22,14 +22,19 @@ public:
     /// <summary>
     /// Initialises a new instance.
     /// </summary>
-    /// <param name="path"></param>
-    explicit FPowerSink(const FString& path);
+    explicit FPowerSink(void);
 
     /// <summary>
     /// Finalises the instance.
     /// </summary>
     /// <param name=""></param>
     virtual ~FPowerSink(void) noexcept;
+
+    /// <summary>
+    /// Open a new file for writing. This must not be called while the sink is in use.
+    /// </summary>
+    /// <param name="path"></param>
+    void Open(const FString& path);
 
 protected:
 

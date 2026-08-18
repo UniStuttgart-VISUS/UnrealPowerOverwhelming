@@ -12,19 +12,25 @@
 /*
  * FPowerSink::FPowerSink
  */
-FPowerSink::FPowerSink(const FString& path) {
-    auto& file = FPlatformFileManager::Get().GetPlatformFile();
-    this->_file = MakeShareable(file.OpenWrite(*path, false, true));
-
-    auto line = FString(TEXT("Timestamp,Sensor,Value")) + LINE_TERMINATOR;
-    this->Write(line);
-}
+FPowerSink::FPowerSink(void) { }
 
 
 /*
  * FPowerSink::~FPowerSink
  */
 FPowerSink::~FPowerSink(void) noexcept { }
+
+
+/*
+ * FPowerSink::Open
+ */
+void FPowerSink::Open(const FString& path) {
+    auto& file = FPlatformFileManager::Get().GetPlatformFile();
+    this->_file = MakeShareable(file.OpenWrite(*path, false, true));
+
+    auto line = FString(TEXT("Timestamp,Sensor,Value")) + LINE_TERMINATOR;
+    this->Write(line);
+}
 
 
 /*
