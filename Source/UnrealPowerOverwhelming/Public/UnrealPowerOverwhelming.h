@@ -25,4 +25,5 @@ public:
 private:
 
     void *_nvapi;
+    void *_pwrowg;
 };
