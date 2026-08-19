@@ -30,7 +30,6 @@ UPowerComponent::UPowerComponent(void)
         SampleBufferSize(1024),
         SampleInterval(5),
         SensorPath(TEXT("unreal-power.json")),
-        StartWithGame(false),
         TinkerforgeCurrentConversionTime(3),
         TinkerforgeSampleAveraging(1),
         TinkerforgeTimeout(1000),
@@ -91,7 +90,14 @@ bool UPowerComponent::Start(void) {
     try {
         UE_LOG(LogTemp, Verbose, TEXT("Opening power output file %s."),
             *this->OutputPath);
-        this->_sink->Open(this->OutputPath);
+        if (!this->_sink->Open(this->OutputPath)) {
+            UE_LOG(LogTemp, Error, TEXT("Failed to open power output file."));
+            return false;
+        }
+
+        UE_LOG(LogTemp, Verbose, TEXT("Dumping sensor details to %s."),
+            *this->SensorPath);
+        visus::pwrowg::dump_sensors(this->_sensors, *this->SensorPath);
 
         UE_LOG(LogTemp, Verbose, TEXT("Starting Power Overwhelming sensor ")
             TEXT("array."));
@@ -253,13 +259,6 @@ void UPowerComponent::BeginPlay(void) {
     this->_markers = this->MarkTicks
         ? this->_sensors.controller<visus::pwrowg::marker_configuration>()
         : nullptr;
-
-    UE_LOG(LogTemp, Verbose, TEXT("Dumping sensor details."));
-    visus::pwrowg::dump_sensors(this->_sensors, *this->SensorPath);
-
-    if (this->StartWithGame) {
-        this->Start();
-    }
 }
 
 

@@ -34,7 +34,7 @@ public:
     /// Open a new file for writing. This must not be called while the sink is in use.
     /// </summary>
     /// <param name="path"></param>
-    void Open(const FString& path);
+    bool Open(const FString& path);
 
 protected:
 
@@ -48,7 +48,7 @@ protected:
 
 private:
 
-    void Write(const FString& line);
+    bool Write(const FString& line);
 
     TSharedPtr<IFileHandle> _file;
 

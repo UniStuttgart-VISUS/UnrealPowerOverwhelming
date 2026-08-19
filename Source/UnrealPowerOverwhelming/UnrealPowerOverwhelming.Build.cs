@@ -14,6 +14,7 @@ public class UnrealPowerOverwhelming : ModuleRules {
 
     public UnrealPowerOverwhelming(ReadOnlyTargetRules target) : base(target) {
         this.PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+        this.bEnableExceptions = true;
 
         this.PublicDependencyModuleNames.AddRange(["Core"]);
         this.PrivateDependencyModuleNames.AddRange([

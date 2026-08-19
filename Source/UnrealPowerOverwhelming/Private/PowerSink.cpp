@@ -24,21 +24,24 @@ FPowerSink::~FPowerSink(void) noexcept { }
 /*
  * FPowerSink::Open
  */
-void FPowerSink::Open(const FString& path) {
+bool FPowerSink::Open(const FString& path) {
     auto& file = FPlatformFileManager::Get().GetPlatformFile();
     this->_file = MakeShareable(file.OpenWrite(*path, false, true));
+    if (this->_file == nullptr) {
+        return false;
+    }
 
     auto line = FString(TEXT("Timestamp,Sensor,Value")) + LINE_TERMINATOR;
-    this->Write(line);
+    return this->Write(line);
 }
 
 
 /*
  * FPowerSink::Write
  */
-void FPowerSink::Write(const FString& line) {
+bool FPowerSink::Write(const FString& line) {
     assert(this->_file.IsValid());
     auto ptr = reinterpret_cast<const uint8 *>(*line);
     auto len = line.Len() * sizeof(TCHAR);
-    this->_file->Write(ptr, len);
+    return this->_file->Write(ptr, len);
 }

@@ -73,11 +73,6 @@ public:
     // logged.
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Output")
     FString SensorPath;
-
-    // Gets or sets whether the sensor array should start with the game.
-    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Sensors")
-    bool StartWithGame;
-
     // Gets or sets the current conversion time of the Tinkerforge sensor. Note
     // that this is an enumerated value which can be looked up in the
     // Tinkerforge documentation.
