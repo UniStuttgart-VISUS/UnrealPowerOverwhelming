@@ -207,6 +207,11 @@ bool UPowerComponent::Trigger() {
         UE_LOG(LogPwrOwg, Warning, TEXT("Failed triggering NI-DAQmx sensors."));
     }
 
+    if (retval) {
+        UE_LOG(LogPwrOwg, Verbose, TEXT("At least one sensor was triggered by ")
+            TEXT("%s (%d)."), *this->GetFName().ToString(), this->GetUniqueID());
+    }
+
     return retval;
 }
 
@@ -294,7 +299,8 @@ void UPowerComponent::BeginPlay(void) {
             c.write_timeout(std::chrono::milliseconds(this->UsbPdWriteTimeout));
         });
 
-    UE_LOG(LogPwrOwg, Verbose, TEXT("Creating Power Overwhelming sensor array."));
+    UE_LOG(LogPwrOwg, Verbose, TEXT("Creating Power Overwhelming sensor array ")
+        TEXT("in %s (%d)."), *this->GetFName().ToString(), this->GetUniqueID());
     this->_sensors = visus::pwrowg::sensor_array::for_all(std::move(config));
 
     this->_markers = this->MarkTicks
