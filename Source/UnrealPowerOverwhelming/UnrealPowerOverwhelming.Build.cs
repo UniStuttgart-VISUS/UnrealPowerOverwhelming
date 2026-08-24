@@ -36,8 +36,12 @@ public class UnrealPowerOverwhelming : ModuleRules {
         foreach (var b in Directory.GetFiles(binaryPath, "*.dll")) {
             this.Logger.LogInformation("Adding {Path} as runtime dependency.", b);
             this.RuntimeDependencies.Add(b);
+            //var f = Path.GetFileName(b);
+            //this.Logger.LogInformation("Adding {Path} as delay-loaded DLL.", f);
+            //this.PublicDelayLoadDLLs.Add(f);
         }
 
+        //this.Definitions.Add("POWER=OVERWHELMING");
         //this.PublicIncludePaths.AddRange([]);
         //this.PrivateIncludePaths.AddRange([]);
         //this.DynamicallyLoadedModuleNames.AddRange([]);

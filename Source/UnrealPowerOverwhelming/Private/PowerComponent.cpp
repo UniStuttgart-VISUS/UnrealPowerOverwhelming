@@ -1,4 +1,4 @@
-﻿// <copyright file="PowerComponent.coo" company="Visualisierungsinstitut der Universität Stuttgart">
+﻿// <copyright file="PowerComponent.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
 // Copyright © 2026 Visualisierungsinstitut der Universität Stuttgart.
 // Licensed under the MIT licence. See LICENCE file for details.
 // </copyright>
@@ -24,20 +24,20 @@
  * UPowerComponent::UPowerComponent
  */
 UPowerComponent::UPowerComponent(void)
-        : MarkTicks(false),
-        OutputPath(TEXT("unreal-power.csv")),
-        PoweneticsTimeout(1000),
-        SampleBufferSize(1024),
-        SampleInterval(5),
-        SensorPath(TEXT("unreal-power.json")),
-        TinkerforgeCurrentConversionTime(3),
-        TinkerforgeSampleAveraging(1),
-        TinkerforgeTimeout(1000),
-        TinkerforgeVoltageConversionTime(3),
-        UsbPdConnectTimeout(1000),
-        UsbPdReadTimeout(5),
-        UsbPdWriteTimeout(100),
-        _markers(nullptr) {
+    : MarkTicks(false),
+    OutputPath(TEXT("unreal-power.csv")),
+    PoweneticsTimeout(1000),
+    SampleBufferSize(1024),
+    SampleInterval(5),
+    SensorPath(TEXT("unreal-power.json")),
+    TinkerforgeCurrentConversionTime(3),
+    TinkerforgeSampleAveraging(1),
+    TinkerforgeTimeout(1000),
+    TinkerforgeVoltageConversionTime(3),
+    UsbPdConnectTimeout(1000),
+    UsbPdReadTimeout(5),
+    UsbPdWriteTimeout(100),
+    _markers(nullptr) {
     PrimaryComponentTick.bCanEverTick = true;
 
     // Disable uncommon sensors which are slow to load by default.
@@ -87,6 +87,12 @@ bool UPowerComponent::EmitMarker(const int id) {
  * UPowerComponent::Start
  */
 bool UPowerComponent::Start(void) {
+    if (!this->CanMeasure()) {
+        UE_LOG(LogTemp, Warning, TEXT("Power Overwhelming sensors cannot be ")
+            TEXT("started from a class default object."));
+        return false;
+    }
+
     try {
         UE_LOG(LogTemp, Verbose, TEXT("Opening power output file %s."),
             *this->OutputPath);
@@ -115,6 +121,12 @@ bool UPowerComponent::Start(void) {
  * UPowerComponent::Stop
  */
 bool UPowerComponent::Stop(void) {
+    if (!this->CanMeasure()) {
+        UE_LOG(LogTemp, Verbose, TEXT("Power Overwhelming sensors cannot be ")
+            TEXT("stopped from a class default object."));
+        return false;
+    }
+
     try {
         UE_LOG(LogTemp, Verbose, TEXT("Stopping Power Overwhelming sensor ")
             TEXT("array."));
@@ -132,8 +144,8 @@ bool UPowerComponent::Stop(void) {
  * UPowerComponent::TickComponent
  */
 void UPowerComponent::TickComponent(float dt,
-        ELevelTick type,
-        FActorComponentTickFunction *function) {
+    ELevelTick type,
+    FActorComponentTickFunction *function) {
     Super::TickComponent(dt, type, function);
 
     if (this->_markers != nullptr) {
@@ -147,6 +159,12 @@ void UPowerComponent::TickComponent(float dt,
  */
 bool UPowerComponent::Trigger() {
     bool retval = false;
+
+    if (!this->CanMeasure()) {
+        UE_LOG(LogTemp, Warning, TEXT("Power Overwhelming sensors cannot be ")
+            TEXT("triggered from a class default object."));
+        return false;
+    }
 
     try {
         retval = this->_rtx_trigger.acquire(
@@ -183,6 +201,12 @@ bool UPowerComponent::Trigger() {
  */
 void UPowerComponent::BeginPlay(void) {
     Super::BeginPlay();
+
+    if (!this->CanMeasure()) {
+        UE_LOG(LogTemp, Warning, TEXT("Power Overwhelming sensors cannot be ")
+            TEXT("configured in a class default object."));
+        return;
+    }
 
     UE_LOG(LogTemp, Verbose, TEXT("Configuring Power Overwhelming sensors."));
     visus::pwrowg::sensor_array_configuration config;
@@ -268,6 +292,15 @@ void UPowerComponent::BeginPlay(void) {
 void UPowerComponent::EndPlay(const EEndPlayReason::Type reason) {
     Super::EndPlay(reason);
     this->Stop();
+}
+
+
+/*
+ * UPowerComponent::CanMeasure
+ */
+bool UPowerComponent::CanMeasure(void) const {
+    return !this->HasAnyFlags(RF_ClassDefaultObject
+        | RF_ImmutableDefaultObject);
 }
 
 #undef LOCTEXT_NAMESPACE

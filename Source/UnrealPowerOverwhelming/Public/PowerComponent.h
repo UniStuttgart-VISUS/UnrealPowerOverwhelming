@@ -145,6 +145,8 @@ protected:
 
 private:
 
+    bool CanMeasure(void) const;
+
     visus::pwrowg::daqmx_sensor_trigger _daqmx_trigger;
     visus::pwrowg::marker_controller *_markers;
     visus::pwrowg::rtx_sensor_trigger _rtx_trigger;

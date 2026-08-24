@@ -16,7 +16,7 @@
  * FUnrealPowerOverwhelmingModule::FUnrealPowerOverwhelmingModule
  */
 FUnrealPowerOverwhelmingModule::FUnrealPowerOverwhelmingModule(void) noexcept
-    : _nvapi(nullptr) { }
+    : _nvapi(nullptr), _pwrowg(nullptr) { }
 
 
 /*
@@ -27,6 +27,10 @@ void FUnrealPowerOverwhelmingModule::ShutdownModule(void) {
         FPlatformProcess::FreeDllHandle(this->_nvapi);
         this->_nvapi = nullptr;
     }
+    if (this->_pwrowg != nullptr) {
+        FPlatformProcess::FreeDllHandle(this->_pwrowg);
+        this->_pwrowg = nullptr;
+    }
 }
 
 
@@ -36,14 +40,51 @@ void FUnrealPowerOverwhelmingModule::ShutdownModule(void) {
 void FUnrealPowerOverwhelmingModule::StartupModule(void) {
     auto& plugins = IPluginManager::Get();
     auto plugin = plugins.FindPlugin(TEXT("UnrealPowerOverwhelming"));
+    check(plugin != nullptr);
 
     if (plugin != nullptr) {
-        auto path = FPaths::Combine(
-            plugin->GetBaseDir(),
-            TEXT("Binaries"),
-            FPlatformProcess::GetBinariesSubdirectory(),
-            TEXT("pwrovrnvapi.dll"));
-        this->_nvapi = FPlatformProcess::GetDllHandle(*path);
+        {
+            auto path = FPaths::Combine(
+                plugin->GetBaseDir(),
+                TEXT("Binaries"),
+                FPlatformProcess::GetBinariesSubdirectory(),
+                TEXT("pwrovrnvapi.dll"));
+            UE_LOG(LogTemp, Verbose, TEXT("Preparing delayed loaded power ")
+                TEXT("libary \"%s\"."), *path);
+            this->_nvapi = FPlatformProcess::GetDllHandle(*path);
+            if (this->_nvapi == nullptr) {
+                UE_LOG(LogTemp, Error, TEXT("Failed to load power library ")
+                    TEXT("\"%s\"."), *path);
+            }
+        }
+        {
+            auto path = FPaths::Combine(
+                plugin->GetBaseDir(),
+                TEXT("Binaries"),
+                FPlatformProcess::GetBinariesSubdirectory(),
+                TEXT("power_overwhelming.dll"));
+            UE_LOG(LogTemp, Verbose, TEXT("Preparing delayed loaded power ")
+                TEXT("libary \"%s\"."), *path);
+            this->_pwrowg = FPlatformProcess::GetDllHandle(*path);
+            if (this->_pwrowg == nullptr) {
+                UE_LOG(LogTemp, Error, TEXT("Failed to load power library ")
+                    TEXT("\"%s\"."), *path);
+            }
+        }
+
+        // The stuff above works for the editor, but not for the packaged game.
+        // Hacking the PATH variable seems to be a functional workaround ...
+        {
+            auto path = FPlatformMisc::GetEnvironmentVariable(TEXT("PATH"));
+            path += FPlatformMisc::GetPathVarDelimiter();
+            path += FPaths::Combine(
+                plugin->GetBaseDir(),
+                TEXT("Binaries"),
+                FPlatformProcess::GetBinariesSubdirectory());
+            UE_LOG(LogTemp, Verbose, TEXT("Updating path variable to \"%s\"."),
+                *path);
+            FPlatformMisc::SetEnvironmentVar(TEXT("PATH"), *path);
+        }
     }
 }
 
