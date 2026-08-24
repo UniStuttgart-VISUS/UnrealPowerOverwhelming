@@ -108,7 +108,8 @@ bool UPowerComponent::Start(void) {
         visus::pwrowg::dump_sensors(this->_sensors, *this->SensorPath);
 
         UE_LOG(LogPwrOwg, Verbose, TEXT("Starting Power Overwhelming sensor ")
-            TEXT("array."));
+            TEXT("array in %s (%d)."), *this->GetFName().ToString(),
+            this->GetUniqueID());
         this->_sensors.start();
         return true;
     } catch (std::exception& ex) {
@@ -135,7 +136,8 @@ bool UPowerComponent::Stop(void) {
 
     try {
         UE_LOG(LogPwrOwg, Verbose, TEXT("Stopping Power Overwhelming sensor ")
-            TEXT("array."));
+            TEXT("array in %s (%d)."), *this->GetFName().ToString(),
+            this->GetUniqueID());
         this->_sensors.stop();
         return true;
     } catch (std::exception& ex) {
@@ -175,6 +177,9 @@ bool UPowerComponent::Trigger() {
             TEXT("triggered from a class default object."));
         return false;
     }
+
+    UE_LOG(LogPwrOwg, Verbose, TEXT("Triggering oscilloscope and DAQ sensors ")
+        TEXT("in %s (%d)."), *this->GetFName().ToString(), this->GetUniqueID());
 
     try {
         retval = this->_rtx_trigger.acquire(
