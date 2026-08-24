@@ -27,3 +27,6 @@ private:
     void *_nvapi;
     void *_pwrowg;
 };
+
+
+DECLARE_LOG_CATEGORY_EXTERN(LogPwrOwg, Log, All)

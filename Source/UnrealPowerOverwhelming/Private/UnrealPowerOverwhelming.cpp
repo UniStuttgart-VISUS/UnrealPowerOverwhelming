@@ -92,3 +92,6 @@ void FUnrealPowerOverwhelmingModule::StartupModule(void) {
 
 
 IMPLEMENT_MODULE(FUnrealPowerOverwhelmingModule, UnrealPowerOverwhelming)
+
+
+DEFINE_LOG_CATEGORY(LogPwrOwg)

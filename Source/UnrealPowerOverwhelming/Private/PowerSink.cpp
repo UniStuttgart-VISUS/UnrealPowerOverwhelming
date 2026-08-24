@@ -8,6 +8,8 @@
 
 #include <cassert>
 
+#include "UnrealPowerOverwhelming.h"
+
 
 /*
  * FPowerSink::FPowerSink
@@ -31,6 +33,7 @@ bool FPowerSink::Open(const FString& path) {
         return false;
     }
 
+    UE_LOG(LogPwrOwg, Verbose, TEXT("Power log %s opened."), *path);
     auto line = FString(TEXT("Timestamp,Sensor,Value")) + LINE_TERMINATOR;
     return this->Write(line);
 }

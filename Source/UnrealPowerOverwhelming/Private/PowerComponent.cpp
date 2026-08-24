@@ -18,6 +18,7 @@
 
 #define LOCTEXT_NAMESPACE "UPowerComponent"
 
+#include "UnrealPowerOverwhelming.h"
 
 
 /*
@@ -88,29 +89,34 @@ bool UPowerComponent::EmitMarker(const int id) {
  */
 bool UPowerComponent::Start(void) {
     if (!this->CanMeasure()) {
-        UE_LOG(LogTemp, Warning, TEXT("Power Overwhelming sensors cannot be ")
+        UE_LOG(LogPwrOwg, Verbose, TEXT("Power Overwhelming sensors cannot be ")
             TEXT("started from a class default object."));
         return false;
     }
 
     try {
-        UE_LOG(LogTemp, Verbose, TEXT("Opening power output file %s."),
+        UE_LOG(LogPwrOwg, Verbose, TEXT("Opening power output file %s."),
             *this->OutputPath);
         if (!this->_sink->Open(this->OutputPath)) {
-            UE_LOG(LogTemp, Error, TEXT("Failed to open power output file."));
+            UE_LOG(LogPwrOwg, Error, TEXT("Failed to open power output file %s."),
+                *this->OutputPath);
             return false;
         }
 
-        UE_LOG(LogTemp, Verbose, TEXT("Dumping sensor details to %s."),
+        UE_LOG(LogPwrOwg, Verbose, TEXT("Dumping sensor details to %s."),
             *this->SensorPath);
         visus::pwrowg::dump_sensors(this->_sensors, *this->SensorPath);
 
-        UE_LOG(LogTemp, Verbose, TEXT("Starting Power Overwhelming sensor ")
+        UE_LOG(LogPwrOwg, Verbose, TEXT("Starting Power Overwhelming sensor ")
             TEXT("array."));
         this->_sensors.start();
         return true;
+    } catch (std::exception& ex) {
+        UE_LOG(LogPwrOwg, Warning, TEXT("Failed to start Power Overwhelming ")
+            TEXT("sensors: %hs"), ex.what());
+        return false;
     } catch (...) {
-        UE_LOG(LogTemp, Warning, TEXT("Failed starting Power Overwhelming ")
+        UE_LOG(LogPwrOwg, Warning, TEXT("Failed to start Power Overwhelming ")
             TEXT("sensors."));
         return false;
     }
@@ -122,18 +128,22 @@ bool UPowerComponent::Start(void) {
  */
 bool UPowerComponent::Stop(void) {
     if (!this->CanMeasure()) {
-        UE_LOG(LogTemp, Verbose, TEXT("Power Overwhelming sensors cannot be ")
+        UE_LOG(LogPwrOwg, Verbose, TEXT("Power Overwhelming sensors cannot be ")
             TEXT("stopped from a class default object."));
         return false;
     }
 
     try {
-        UE_LOG(LogTemp, Verbose, TEXT("Stopping Power Overwhelming sensor ")
+        UE_LOG(LogPwrOwg, Verbose, TEXT("Stopping Power Overwhelming sensor ")
             TEXT("array."));
         this->_sensors.stop();
         return true;
+    } catch (std::exception& ex) {
+        UE_LOG(LogPwrOwg, Warning, TEXT("Failed to stop Power Overwhelming ")
+            TEXT("sensors: %hs"), ex.what());
+        return false;
     } catch (...) {
-        UE_LOG(LogTemp, Warning, TEXT("Failed stopping Power Overwhelming ")
+        UE_LOG(LogPwrOwg, Warning, TEXT("Failed to stop Power Overwhelming ")
             TEXT("sensors."));
         return false;
     }
@@ -161,7 +171,7 @@ bool UPowerComponent::Trigger() {
     bool retval = false;
 
     if (!this->CanMeasure()) {
-        UE_LOG(LogTemp, Warning, TEXT("Power Overwhelming sensors cannot be ")
+        UE_LOG(LogPwrOwg, Verbose, TEXT("Power Overwhelming sensors cannot be ")
             TEXT("triggered from a class default object."));
         return false;
     }
@@ -169,27 +179,27 @@ bool UPowerComponent::Trigger() {
     try {
         retval = this->_rtx_trigger.acquire(
             [](void) {
-                UE_LOG(LogTemp, Verbose, TEXT("RTx sample acquired."));
+                UE_LOG(LogPwrOwg, Verbose, TEXT("RTx sample acquired."));
             },
             [](std::exception_ptr) {
-                UE_LOG(LogTemp, Warning, TEXT("RTx acquisition failed."));
+                UE_LOG(LogPwrOwg, Warning, TEXT("RTx acquisition failed."));
                 return true;
             }) || retval;
     } catch (...) {
-        UE_LOG(LogTemp, Warning, TEXT("Failed triggering RTx sensors."));
+        UE_LOG(LogPwrOwg, Warning, TEXT("Failed triggering RTx sensors."));
     }
 
     try {
         retval = this->_daqmx_trigger.acquire(
             [](void) {
-                UE_LOG(LogTemp, Verbose, TEXT("NI-DAQmx sample acquired."));
+                UE_LOG(LogPwrOwg, Verbose, TEXT("NI-DAQmx sample acquired."));
             },
             [](std::exception_ptr) {
-                UE_LOG(LogTemp, Warning, TEXT("NI-DAQmx acquisition failed."));
+                UE_LOG(LogPwrOwg, Warning, TEXT("NI-DAQmx acquisition failed."));
                 return true;
             }) || retval;
     } catch (...) {
-        UE_LOG(LogTemp, Warning, TEXT("Failed triggering NI-DAQmx sensors."));
+        UE_LOG(LogPwrOwg, Warning, TEXT("Failed triggering NI-DAQmx sensors."));
     }
 
     return retval;
@@ -203,12 +213,14 @@ void UPowerComponent::BeginPlay(void) {
     Super::BeginPlay();
 
     if (!this->CanMeasure()) {
-        UE_LOG(LogTemp, Warning, TEXT("Power Overwhelming sensors cannot be ")
+        UE_LOG(LogPwrOwg, Verbose, TEXT("Power Overwhelming sensors cannot be ")
             TEXT("configured in a class default object."));
         return;
     }
 
-    UE_LOG(LogTemp, Verbose, TEXT("Configuring Power Overwhelming sensors."));
+    UE_LOG(LogPwrOwg, Verbose, TEXT("Configuring Power Overwhelming sensors ")
+        TEXT("in %s (%d) on game startup."), *this->GetFName().ToString(),
+        this->GetUniqueID());
     visus::pwrowg::sensor_array_configuration config;
 
     for (auto& d : this->DisabledSensorClasses) {
@@ -228,7 +240,7 @@ void UPowerComponent::BeginPlay(void) {
         .deliver_context(this->_sink.Get());
 
     if (FPaths::FileExists(this->DaqmxConfiguration)) {
-        UE_LOG(LogTemp, Verbose, TEXT("Configuring DAQmx sensors from JSON."));
+        UE_LOG(LogPwrOwg, Verbose, TEXT("Configuring DAQmx sensors from JSON."));
         config.configure<visus::pwrowg::daqmx_configuration>(
             [this](visus::pwrowg::daqmx_configuration& c) {
                 c = visus::pwrowg::daqmx_configuration::load(
@@ -243,7 +255,7 @@ void UPowerComponent::BeginPlay(void) {
         });
 
     if (FPaths::FileExists(this->RtxConfiguration)) {
-        UE_LOG(LogTemp, Verbose, TEXT("Configuring RTx sensors from JSON."));
+        UE_LOG(LogPwrOwg, Verbose, TEXT("Configuring RTx sensors from JSON."));
         config.configure<visus::pwrowg::rtx_configuration>(
             [this](visus::pwrowg::rtx_configuration& c) {
                 c = visus::pwrowg::rtx_configuration::load(
@@ -277,7 +289,7 @@ void UPowerComponent::BeginPlay(void) {
             c.write_timeout(std::chrono::milliseconds(this->UsbPdWriteTimeout));
         });
 
-    UE_LOG(LogTemp, Verbose, TEXT("Creating Power Overwhelming sensor array."));
+    UE_LOG(LogPwrOwg, Verbose, TEXT("Creating Power Overwhelming sensor array."));
     this->_sensors = visus::pwrowg::sensor_array::for_all(std::move(config));
 
     this->_markers = this->MarkTicks
@@ -291,7 +303,17 @@ void UPowerComponent::BeginPlay(void) {
  */
 void UPowerComponent::EndPlay(const EEndPlayReason::Type reason) {
     Super::EndPlay(reason);
-    this->Stop();
+
+    UE_LOG(LogPwrOwg, Verbose, TEXT("Making sure that Power Overwhelming ")
+        TEXT("sensors in %s (%d) are not running anymore."),
+        *this->GetFName().ToString(), this->GetUniqueID());
+    if (!this->Stop()) {
+        UE_LOG(LogPwrOwg, Display, TEXT("The Power Overwhelming sensor ")
+            TEXT("array could not be stopped as part of the component ")
+            TEXT("shutdown. This problem can be ignored if the sensors are ")
+            TEXT("managed manually (i.e. the array has not been running when ")
+            TEXT("the game stopped."));
+    }
 }
 
 
