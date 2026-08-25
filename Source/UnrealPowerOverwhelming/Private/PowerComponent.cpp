@@ -28,6 +28,7 @@ UPowerComponent::UPowerComponent(void)
     : MarkTicks(false),
     OutputPath(TEXT("unreal-power.csv")),
     PoweneticsTimeout(1000),
+    Required(false),
     SampleBufferSize(1024),
     SampleInterval(5),
     SensorPath(TEXT("unreal-power.json")),
@@ -301,7 +302,21 @@ void UPowerComponent::BeginPlay(void) {
 
     UE_LOG(LogPwrOwg, Verbose, TEXT("Creating Power Overwhelming sensor array ")
         TEXT("in %s (%d)."), *this->GetFName().ToString(), this->GetUniqueID());
-    this->_sensors = visus::pwrowg::sensor_array::for_all(std::move(config));
+    try {
+        this->_sensors = visus::pwrowg::sensor_array::for_all(std::move(config));
+    } catch (std::exception& ex) {
+        UE_LOG(LogPwrOwg, Error, TEXT("Failed to create Power Overwhelming ")
+            TEXT("sensors: %hs"), ex.what());
+        if (this->Required) {
+            throw;
+        }
+    } catch (...) {
+        UE_LOG(LogPwrOwg, Error, TEXT("Failed to create Power Overwhelming ")
+            TEXT("sensors."));
+        if (this->Required) {
+            throw;
+        }
+    }
 
     this->_markers = this->MarkTicks
         ? this->_sensors.controller<visus::pwrowg::marker_configuration>()

@@ -55,6 +55,12 @@ public:
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Sensors")
     int32 PoweneticsTimeout;
 
+    // Gets or sets whether the sensor array is required to be constructed. If
+    // this flag is set and the configured sensors cannot be created, the
+    // component will throw on start and crash the application.
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Output")
+    bool Required;
+
     // Gets or sets the path to a JSON file that contains the configuration of
     // the Rohde & Schwarz RTA/RTB sensors.
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Sensors")
