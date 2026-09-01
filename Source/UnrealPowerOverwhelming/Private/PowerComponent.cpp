@@ -11,6 +11,7 @@
 #include <visus/pwrowg/dump_sensors.h>
 #include <visus/pwrowg/hmc8015_configuration.h>
 #include <visus/pwrowg/marker_configuration.h>
+#include <visus/pwrowg/msr_configuration.h>
 #include <visus/pwrowg/powenetics_configuration.h>
 #include <visus/pwrowg/rtx_configuration.h>
 #include <visus/pwrowg/tinkerforge_configuration.h>
@@ -264,6 +265,11 @@ void UPowerComponent::BeginPlay(void) {
     config.configure<visus::pwrowg::powenetics_configuration>(
         [this](visus::pwrowg::powenetics_configuration& c) {
             c.timeout(std::chrono::milliseconds(this->PoweneticsTimeout));
+        });
+
+    config.configure<visus::pwrowg::msr_configuration>(
+        [this](visus::pwrowg::msr_configuration& c) {
+            c.first_core(this->RaplOnlyCore0);
         });
 
     if (FPaths::FileExists(this->RtxConfiguration)) {
