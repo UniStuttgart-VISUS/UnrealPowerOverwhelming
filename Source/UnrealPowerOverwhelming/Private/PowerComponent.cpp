@@ -25,21 +25,22 @@
  * UPowerComponent::UPowerComponent
  */
 UPowerComponent::UPowerComponent(void)
-    : MarkTicks(false),
-    OutputPath(TEXT("unreal-power.csv")),
-    PoweneticsTimeout(1000),
-    Required(false),
-    SampleBufferSize(1024),
-    SampleInterval(5),
-    SensorPath(TEXT("unreal-power.json")),
-    TinkerforgeCurrentConversionTime(3),
-    TinkerforgeSampleAveraging(1),
-    TinkerforgeTimeout(1000),
-    TinkerforgeVoltageConversionTime(3),
-    UsbPdConnectTimeout(1000),
-    UsbPdReadTimeout(5),
-    UsbPdWriteTimeout(100),
-    _markers(nullptr) {
+        : MarkTicks(false),
+        OutputPath(TEXT("unreal-power.csv")),
+        PoweneticsTimeout(1000),
+        RaplOnlyCore0(false),
+        Required(false),
+        SampleBufferSize(1024),
+        SampleInterval(5),
+        SensorPath(TEXT("unreal-power.json")),
+        TinkerforgeCurrentConversionTime(3),
+        TinkerforgeSampleAveraging(1),
+        TinkerforgeTimeout(1000),
+        TinkerforgeVoltageConversionTime(3),
+        UsbPdConnectTimeout(1000),
+        UsbPdReadTimeout(5),
+        UsbPdWriteTimeout(100),
+        _markers(nullptr) {
     PrimaryComponentTick.bCanEverTick = true;
 
     // Disable uncommon sensors which are slow to load by default.
