@@ -55,6 +55,11 @@ public:
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Sensors")
     int32 PoweneticsTimeout;
 
+    // Gets or sets whether RAPL sensors are limited to core 0 to reduce
+    // the number of channels reported.
+    UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Sensors")
+    bool RaplOnlyCore0;
+
     // Gets or sets whether the sensor array is required to be constructed. If
     // this flag is set and the configured sensors cannot be created, the
     // component will throw on start and crash the application.
@@ -79,6 +84,7 @@ public:
     // logged.
     UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Output")
     FString SensorPath;
+
     // Gets or sets the current conversion time of the Tinkerforge sensor. Note
     // that this is an enumerated value which can be looked up in the
     // Tinkerforge documentation.
