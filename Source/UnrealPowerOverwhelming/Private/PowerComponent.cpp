@@ -189,6 +189,9 @@ bool UPowerComponent::Trigger() {
             [](void) {
                 UE_LOG(LogPwrOwg, Verbose, TEXT("RTx sample acquired."));
             },
+            [](void) {
+                UE_LOG(LogPwrOwg, Verbose, TEXT("RTx sample processed."));
+            },
             [](std::exception_ptr) {
                 UE_LOG(LogPwrOwg, Warning, TEXT("RTx acquisition failed."));
                 return true;

@@ -9,8 +9,10 @@
  * FPowerSink::write_samples
  */
 template<class TIterator>
-void FPowerSink::write_samples(const TIterator begin, const TIterator end,
-        const visus::pwrowg::sensor_description *sensors) {
+void FPowerSink::write_samples(_In_ const TIterator begin,
+        _In_ const TIterator end,
+        _In_reads_(cnt) const visus::pwrowg::sensor_description *sensors,
+        _In_ const std::size_t cnt) {
     for (auto it = begin; it != end; ++it) {
         auto& desc = sensors[it->source];
         FString line;
