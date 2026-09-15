@@ -65,17 +65,19 @@ public class PowerOverwhelming : ModuleRules {
             $"-DPWROWG_BuildTests=OFF",
             $"-DPWROWG_BuildWeb=OFF",
             $"-D{this.GetFeatureState("PWROWG_WithAdl")}",
-            $"-D{this.GetFeatureState("PWROWG_WithBenchlab", "OFF")}",
+            $"-D{this.GetFeatureState("PWROWG_WithBenchlab", "ON")}",
             $"-D{this.GetFeatureState("PWROWG_WithIgcl")}",
             $"-D{this.GetFeatureState("PWROWG_WithNiDaqMx", (daqmx is not null) ? "ON" : "OFF")}",
             $"-D{this.GetFeatureState("PWROWG_WithNvapi")}",
             $"-D{this.GetFeatureState("PWROWG_WithNvml")}",
-            $"-D{this.GetFeatureState("PWROWG_WithPowenetics", "OFF")}",
+            $"-DPWROWG_WithParquet=OFF",
+            $"-D{this.GetFeatureState("PWROWG_WithPowenetics", "ON")}",
             $"-D{this.GetFeatureState("PWROWG_WithVisa", (visa is not null) ? "ON" : "OFF")}");
         this.Logger.LogInformation("Build using CMake.");
         var build = this.ExecuteCommand("cmake",
             "--build", $"\"{this.BuildFolder}\"",
-            "--config", $"\"{this.Configuration}\"",
+            //"--config", $"\"{this.Configuration}\"",
+            "--config", "\"Release\"",
             "--target", "\"install\"",
             "-j", Environment.ProcessorCount.ToString());
 

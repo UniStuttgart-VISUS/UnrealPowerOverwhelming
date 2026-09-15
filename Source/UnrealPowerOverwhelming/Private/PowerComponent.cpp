@@ -14,6 +14,7 @@
 #include <visus/pwrowg/msr_configuration.h>
 #include <visus/pwrowg/powenetics_configuration.h>
 #include <visus/pwrowg/rtx_configuration.h>
+#include <visus/pwrowg/sensor_filters.h>
 #include <visus/pwrowg/tinkerforge_configuration.h>
 #include <visus/pwrowg/usb_pd_configuration.h>
 
@@ -51,11 +52,13 @@ UPowerComponent::UPowerComponent(void)
     }
 
     {
+        // 0xebfa0324, 0x7d7a, 0x464e, 0x85, 0x10, 0xc1, 0xa1, 0x9c, 0xba, 0xac, 0xaf
         auto i = visus::pwrowg::rtx_configuration::id.to_string<TCHAR>();
         this->DisabledSensorClasses.Add(i.c_str());
     }
 
     {
+        // 0x2A24F596, 0xC0C0, 0x4395, 0x81CD, 0x92, 0x42, 0xFD, 0xA9, 0xAC, 0xF1
         auto i = visus::pwrowg::tinkerforge_configuration::id.to_string<TCHAR>();
         this->DisabledSensorClasses.Add(i.c_str());
     }
@@ -313,7 +316,16 @@ void UPowerComponent::BeginPlay(void) {
     UE_LOG(LogPwrOwg, Verbose, TEXT("Creating Power Overwhelming sensor array ")
         TEXT("in %s (%d)."), *this->GetFName().ToString(), this->GetUniqueID());
     try {
-        this->_sensors = visus::pwrowg::sensor_array::for_all(std::move(config));
+        this->_sensors = visus::pwrowg::sensor_array::for_matches(
+            std::move(config), visus::pwrowg::is_any_of<
+            visus::pwrowg::is_power_sensor,
+            visus::pwrowg::is_marker_sensor,
+            visus::pwrowg::is_voltage_sensor,
+            visus::pwrowg::is_current_sensor>);
+        for (auto& s : this->_sensors) {
+            UE_LOG(LogPwrOwg, Verbose, TEXT("Power sensor %s is active."),
+                s.id());
+        }
     } catch (std::exception& ex) {
         UE_LOG(LogPwrOwg, Error, TEXT("Failed to create Power Overwhelming ")
             TEXT("sensors: %hs"), ex.what());
