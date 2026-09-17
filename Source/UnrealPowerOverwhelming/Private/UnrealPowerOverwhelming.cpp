@@ -23,9 +23,17 @@ FUnrealPowerOverwhelmingModule::FUnrealPowerOverwhelmingModule(void) noexcept
  * FUnrealPowerOverwhelmingModule::ShutdownModule
  */
 void FUnrealPowerOverwhelmingModule::ShutdownModule(void) {
+    if (this->_benchlab != nullptr) {
+        FPlatformProcess::FreeDllHandle(this->_benchlab);
+        this->_benchlab = nullptr;
+    }
     if (this->_nvapi != nullptr) {
         FPlatformProcess::FreeDllHandle(this->_nvapi);
         this->_nvapi = nullptr;
+    }
+    if (this->_powenetics != nullptr) {
+        FPlatformProcess::FreeDllHandle(this->_powenetics);
+        this->_powenetics = nullptr;
     }
     if (this->_pwrowg != nullptr) {
         FPlatformProcess::FreeDllHandle(this->_pwrowg);
@@ -48,12 +56,40 @@ void FUnrealPowerOverwhelmingModule::StartupModule(void) {
                 plugin->GetBaseDir(),
                 TEXT("Binaries"),
                 FPlatformProcess::GetBinariesSubdirectory(),
+                TEXT("libbenchlab.dll"));
+            UE_LOG(LogPwrOwg, Verbose, TEXT("Preparing delayed loaded power ")
+                TEXT("libary \"%s\"."), *path);
+            this->_benchlab = FPlatformProcess::GetDllHandle(*path);
+            if (this->_benchlab == nullptr) {
+                UE_LOG(LogPwrOwg, Error, TEXT("Failed to load power library ")
+                    TEXT("\"%s\"."), *path);
+            }
+        }
+        {
+            auto path = FPaths::Combine(
+                plugin->GetBaseDir(),
+                TEXT("Binaries"),
+                FPlatformProcess::GetBinariesSubdirectory(),
                 TEXT("pwrovrnvapi.dll"));
-            UE_LOG(LogTemp, Verbose, TEXT("Preparing delayed loaded power ")
+            UE_LOG(LogPwrOwg, Verbose, TEXT("Preparing delayed loaded power ")
                 TEXT("libary \"%s\"."), *path);
             this->_nvapi = FPlatformProcess::GetDllHandle(*path);
             if (this->_nvapi == nullptr) {
-                UE_LOG(LogTemp, Error, TEXT("Failed to load power library ")
+                UE_LOG(LogPwrOwg, Error, TEXT("Failed to load power library ")
+                    TEXT("\"%s\"."), *path);
+            }
+        }
+        {
+            auto path = FPaths::Combine(
+                plugin->GetBaseDir(),
+                TEXT("Binaries"),
+                FPlatformProcess::GetBinariesSubdirectory(),
+                TEXT("libpowenetics.dll"));
+            UE_LOG(LogPwrOwg, Verbose, TEXT("Preparing delayed loaded power ")
+                TEXT("libary \"%s\"."), *path);
+            this->_powenetics = FPlatformProcess::GetDllHandle(*path);
+            if (this->_powenetics == nullptr) {
+                UE_LOG(LogPwrOwg, Error, TEXT("Failed to load power library ")
                     TEXT("\"%s\"."), *path);
             }
         }
@@ -63,11 +99,11 @@ void FUnrealPowerOverwhelmingModule::StartupModule(void) {
                 TEXT("Binaries"),
                 FPlatformProcess::GetBinariesSubdirectory(),
                 TEXT("power_overwhelming.dll"));
-            UE_LOG(LogTemp, Verbose, TEXT("Preparing delayed loaded power ")
+            UE_LOG(LogPwrOwg, Verbose, TEXT("Preparing delayed loaded power ")
                 TEXT("libary \"%s\"."), *path);
             this->_pwrowg = FPlatformProcess::GetDllHandle(*path);
             if (this->_pwrowg == nullptr) {
-                UE_LOG(LogTemp, Error, TEXT("Failed to load power library ")
+                UE_LOG(LogPwrOwg, Error, TEXT("Failed to load power library ")
                     TEXT("\"%s\"."), *path);
             }
         }
@@ -81,7 +117,7 @@ void FUnrealPowerOverwhelmingModule::StartupModule(void) {
                 plugin->GetBaseDir(),
                 TEXT("Binaries"),
                 FPlatformProcess::GetBinariesSubdirectory());
-            UE_LOG(LogTemp, Verbose, TEXT("Updating path variable to \"%s\"."),
+            UE_LOG(LogPwrOwg, Verbose, TEXT("Updating path variable to \"%s\"."),
                 *path);
             FPlatformMisc::SetEnvironmentVar(TEXT("PATH"), *path);
         }

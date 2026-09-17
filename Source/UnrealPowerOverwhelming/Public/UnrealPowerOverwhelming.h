@@ -24,7 +24,9 @@ public:
 
 private:
 
+    void *_benchlab;
     void *_nvapi;
+    void *_powenetics;
     void *_pwrowg;
 };
 

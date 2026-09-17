@@ -252,7 +252,7 @@ void UPowerComponent::BeginPlay(void) {
     }
 
     this->_sink = MakeShared<visus::pwrowg::thread_local_sink<FPowerSink>>(
-        this->SampleBufferSize);
+        this->SampleBufferSize, true);
 
     config.sample_every(std::abs(this->SampleInterval))
         .deliver_to(decltype(this->_sink)::ElementType::sample_callback)
