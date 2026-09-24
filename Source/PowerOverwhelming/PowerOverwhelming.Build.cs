@@ -77,8 +77,7 @@ public class PowerOverwhelming : ModuleRules {
         var build = this.ExecuteCommand("cmake",
             "--build", $"\"{this.BuildFolder}\"",
             //"--config", $"\"{this.Configuration}\"",
-            //"--config", "\"Release\"",
-            "--config", "\"Debug\"",
+            "--config", "\"Release\"",
             "--target", "\"install\"",
             "-j", Environment.ProcessorCount.ToString());
 
