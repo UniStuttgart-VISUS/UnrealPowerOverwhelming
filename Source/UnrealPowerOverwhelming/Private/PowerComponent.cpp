@@ -319,9 +319,9 @@ void UPowerComponent::BeginPlay(void) {
         this->_sensors = visus::pwrowg::sensor_array::for_matches(
             std::move(config), visus::pwrowg::is_any_of<
             visus::pwrowg::is_power_sensor,
-            visus::pwrowg::is_marker_sensor,
+            visus::pwrowg::is_marker_sensor/*,
             visus::pwrowg::is_voltage_sensor,
-            visus::pwrowg::is_current_sensor>);
+            visus::pwrowg::is_current_sensor*/>);
         for (auto& s : this->_sensors) {
             UE_LOG(LogPwrOwg, Verbose, TEXT("Power sensor %s is active."),
                 s.id());
